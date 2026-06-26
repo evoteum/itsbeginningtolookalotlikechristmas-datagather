@@ -1,0 +1,22 @@
+###################################################################################
+# ⚠️ This file is controlled by OpenTofu in the estate-repos repository.
+#    Manual changes will be **overwritten** within 24 hours.
+###################################################################################
+
+name: container-build-and-push
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "python/**"
+
+permissions:
+  actions: write
+  contents: write
+  id-token: write
+
+jobs:
+  call-container-build-and-push:
+    uses: evoteum/estate-reusable-workflows/.github/workflows/container-build-and-push.yml@main
+    secrets: inherit
