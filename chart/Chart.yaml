@@ -1,0 +1,5 @@
+apiVersion: v2
+name: itsbeginningtolookalotlikechristmas-datagather
+description: Gathers the data for ItsBeginningToLookALotLike.Christmas
+type: application
+version: 0.1.0

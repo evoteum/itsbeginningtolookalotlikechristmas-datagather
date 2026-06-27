@@ -51,6 +51,16 @@ Gathers the data for ItsBeginningToLookALotLike.Christmas
 [//]: # (Must not have its own title)
 [//]: # (A detailed description of the repo)
 
+Fetches the daily Spotify popularity score for
+[It's Beginning to Look a Lot Like Christmas](https://youtu.be/KmddeUJJEuU) and appends it
+to `data.csv` in the
+[itsbeginningtolookalotlikechristmas](https://github.com/evoteum/itsbeginningtolookalotlikechristmas)
+repository. That commit triggers a site image rebuild, keeping
+[ItsBeginningToLookALotLike.Christmas](https://ItsBeginningToLookALotLike.Christmas) up to date.
+
+A `CronJob` running in the [kubernetes-lab-services](https://github.com/evoteum/kubernetes-lab-services)
+cluster (Helm chart in [`chart/`](chart/)) runs a pre-built image of `python/main.py` daily.
+
 
 
 ## Table of Contents
@@ -67,6 +77,7 @@ Gathers the data for ItsBeginningToLookALotLike.Christmas
 
 - [Install](#install)
 - [Usage](#usage)
+- [Secrets](#secrets)
 - [Documentation](#documentation)
 - [Repository Configuration](#repository-configuration)
 - [Contributing](#contributing)
@@ -94,11 +105,29 @@ Gathers the data for ItsBeginningToLookALotLike.Christmas
 [//]: # (OPTIONAL IF documentation repo)
 [//]: # (ELSE REQUIRED)
 
+Install the Python requirements:
 
+```shell
+pip install -r python/requirements.txt
+```
+
+Set the required environment variables (see [Secrets](#secrets)), then run:
+
+```shell
+python python/main.py
+```
+
+If `site/data.csv` is not found, the script will clone
+[itsbeginningtolookalotlikechristmas](https://github.com/evoteum/itsbeginningtolookalotlikechristmas)
+into the current directory automatically.
 
 ## Usage
 [//]: # (REQUIRED)
 [//]: # (Explain what the thing does. Use screenshots and/or videos.)
+
+In production, the `CronJob` runs automatically at midnight UTC daily. To trigger it
+manually, use `kubectl create job` from the CronJob in the
+`itsbeginningtolookalotlikechristmas-datagather` namespace.
 
 
 
@@ -108,7 +137,20 @@ Gathers the data for ItsBeginningToLookALotLike.Christmas
 [//]: # (This is a space for ≥0 sections to be included,)
 [//]: # (each of which must have their own titles.)
 
+## Secrets
 
+Sourced from OpenBao via the `openbao` `ClusterSecretStore` in the cluster.
+For local development, set these as environment variables.
+
+| OpenBao path                                         | Key              | Value                        |
+|------------------------------------------------------|------------------|------------------------------|
+| `itsbeginningtolookalotlikechristmas/spotify`        | `client_id`      | Spotify app client ID        |
+| `itsbeginningtolookalotlikechristmas/spotify`        | `client_secret`  | Spotify app client secret    |
+| `platform/evoteumbot`                                | `ssh_privatekey` | SSH deploy key (private key) |
+
+The deploy key's public half must be added to the
+[itsbeginningtolookalotlikechristmas](https://github.com/evoteum/itsbeginningtolookalotlikechristmas)
+repo (Settings → Deploy keys) with **write access** enabled.
 
 ## Documentation
 

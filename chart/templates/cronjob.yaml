@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: datagather
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: datagather
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: git-ssh-key
+              secret:
+                secretName: git-deploy-key
+                defaultMode: 0400
+          containers:
+            - name: datagather
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              env:
+                - name: SPOTIFY_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: spotify-credentials
+                      key: client_id
+                - name: SPOTIFY_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: spotify-credentials
+                      key: client_secret
+                - name: GIT_SSH_KEY_PATH
+                  value: /etc/git-secret/ssh_privatekey
+                - name: GIT_USER_NAME
+                  value: {{ .Values.git.user.name | quote }}
+                - name: GIT_USER_EMAIL
+                  value: {{ .Values.git.user.email | quote }}
+              volumeMounts:
+                - name: git-ssh-key
+                  mountPath: /etc/git-secret
+                  readOnly: true

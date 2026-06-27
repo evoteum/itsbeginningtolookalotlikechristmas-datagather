@@ -1,0 +1,9 @@
+schedule: "0 0 * * *"
+image:
+  repository: quay.io/evoteum/itsbeginningtolookalotlikechristmas-datagather
+  tag: latest
+git:
+  repo: git@github.com:evoteum/itsbeginningtolookalotlikechristmas.git
+  user:
+    name: evoteum-bot
+    email: evoteum-bot@evoteum.com
