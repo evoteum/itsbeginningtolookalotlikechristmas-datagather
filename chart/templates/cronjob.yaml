@@ -17,11 +17,6 @@ spec:
             app: itsbeginningtolookalotlikechristmas-datagather
         spec:
           restartPolicy: Never
-          volumes:
-            - name: git-ssh-key
-              secret:
-                secretName: git-deploy-key
-                defaultMode: 0400
           containers:
             - name: itsbeginningtolookalotlikechristmas-datagather
               image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -36,13 +31,17 @@ spec:
                     secretKeyRef:
                       name: spotify-credentials
                       key: client_secret
-                - name: GIT_SSH_KEY_PATH
-                  value: /etc/git-secret/ssh_privatekey
+                - name: GITHUB_APP_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: evoteumbot
+                      key: app_id
+                - name: GITHUB_APP_PRIVATE_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: evoteumbot
+                      key: private_key
                 - name: GIT_USER_NAME
                   value: {{ .Values.git.user.name | quote }}
                 - name: GIT_USER_EMAIL
                   value: {{ .Values.git.user.email | quote }}
-              volumeMounts:
-                - name: git-ssh-key
-                  mountPath: /etc/git-secret
-                  readOnly: true
