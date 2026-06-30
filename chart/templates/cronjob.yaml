@@ -16,7 +16,7 @@ spec:
           labels:
             app: itsbeginningtolookalotlikechristmas-datagather
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           volumes:
             - name: git-ssh-key
               secret:
