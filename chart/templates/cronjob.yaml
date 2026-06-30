@@ -1,17 +1,20 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: datagather
+  name: itsbeginningtolookalotlikechristmas-datagather
 spec:
   schedule: {{ .Values.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 300
       backoffLimit: 2
       template:
         metadata:
           labels:
-            app: datagather
+            app: itsbeginningtolookalotlikechristmas-datagather
         spec:
           restartPolicy: OnFailure
           volumes:
@@ -20,7 +23,7 @@ spec:
                 secretName: git-deploy-key
                 defaultMode: 0400
           containers:
-            - name: datagather
+            - name: itsbeginningtolookalotlikechristmas-datagather
               image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
               env:
                 - name: SPOTIFY_CLIENT_ID
