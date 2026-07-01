@@ -51,15 +51,18 @@ Gathers the data for ItsBeginningToLookALotLike.Christmas
 [//]: # (Must not have its own title)
 [//]: # (A detailed description of the repo)
 
-Fetches the daily Spotify popularity score for
-[It's Beginning to Look a Lot Like Christmas](https://youtu.be/KmddeUJJEuU) and appends it
-to `data.csv` in the
+Fetches the daily popularity score for Perry Como's
+[It's Beginning to Look a Lot Like Christmas](https://youtu.be/KmddeUJJEuU) from the
+[Deezer API](https://developers.deezer.com/api) and appends it to `data.csv` in the
 [itsbeginningtolookalotlikechristmas](https://github.com/evoteum/itsbeginningtolookalotlikechristmas)
 repository. That commit triggers a site image rebuild, keeping
 [ItsBeginningToLookALotLike.Christmas](https://ItsBeginningToLookALotLike.Christmas) up to date.
 
 A `CronJob` running in the [kubernetes-lab-services](https://github.com/evoteum/kubernetes-lab-services)
 cluster (Helm chart in [`chart/`](chart/)) runs a pre-built image of `python/main.py` daily.
+
+Previously this used the Spotify Web API, but Spotify began requiring a paid Premium subscription
+to access their API, making it no longer viable for this use case.
 
 
 
@@ -142,15 +145,12 @@ manually, use `kubectl create job` from the CronJob in the
 Sourced from OpenBao via the `openbao` `ClusterSecretStore` in the cluster.
 For local development, set these as environment variables.
 
-| OpenBao path                                         | Key              | Value                        |
-|------------------------------------------------------|------------------|------------------------------|
-| `itsbeginningtolookalotlikechristmas/spotify`        | `client_id`      | Spotify app client ID        |
-| `itsbeginningtolookalotlikechristmas/spotify`        | `client_secret`  | Spotify app client secret    |
-| `platform/evoteumbot`                                | `ssh_privatekey` | SSH deploy key (private key) |
+| OpenBao path          | Key              | Value                            |
+|-----------------------|------------------|----------------------------------|
+| `platform/evoteumbot` | `app_id`         | GitHub App ID                    |
+| `platform/evoteumbot` | `ssh_privatekey` | GitHub App private key (RSA PEM) |
 
-The deploy key's public half must be added to the
-[itsbeginningtolookalotlikechristmas](https://github.com/evoteum/itsbeginningtolookalotlikechristmas)
-repo (Settings → Deploy keys) with **write access** enabled.
+The Deezer API requires no authentication.
 
 ## Documentation
 

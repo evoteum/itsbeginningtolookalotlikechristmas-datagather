@@ -21,16 +21,6 @@ spec:
             - name: itsbeginningtolookalotlikechristmas-datagather
               image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
               env:
-                - name: SPOTIFY_CLIENT_ID
-                  valueFrom:
-                    secretKeyRef:
-                      name: spotify-credentials
-                      key: client_id
-                - name: SPOTIFY_CLIENT_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      name: spotify-credentials
-                      key: client_secret
                 - name: GITHUB_APP_ID
                   valueFrom:
                     secretKeyRef:

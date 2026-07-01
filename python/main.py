@@ -20,8 +20,6 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 load_dotenv()
-our_client_id = getenv("SPOTIFY_CLIENT_ID")
-our_client_secret = getenv("SPOTIFY_CLIENT_SECRET")
 github_app_id = getenv("GITHUB_APP_ID")
 github_app_private_key = getenv("GITHUB_APP_PRIVATE_KEY")
 git_user_name = getenv("GIT_USER_NAME", "evoteum-bot")
@@ -30,7 +28,8 @@ site_repo_owner = "evoteum"
 site_repo_name = "itsbeginningtolookalotlikechristmas"
 site_repo_https = f"https://github.com/{site_repo_owner}/{site_repo_name}.git"
 data_file_relative = Path("site") / "data.csv"
-this_song_id = "2pXpURmn6zC5ZYDMms6fwa"
+deezer_artist = "Perry Como"
+deezer_track = "It's Beginning to Look a Lot Like Christmas"
 workspace = Path("workspace")
 REQUEST_TIMEOUT = 30
 
@@ -113,55 +112,36 @@ def get_repo(token):
         raise
 
 
-def get_data(client_id, client_secret, song_id):
-    log.info("Attempting to request Spotify auth token")
+def get_data(artist, track):
+    url = "https://api.deezer.com/search"
+    params = {"q": f'artist:"{artist}" track:"{track}"'}
+    log.info("Attempting to fetch Deezer track data for %r by %r", track, artist)
     try:
-        auth_response = post(
-            "https://accounts.spotify.com/api/token",
-            data={"grant_type": "client_credentials"},
-            auth=(client_id, client_secret),
-            timeout=REQUEST_TIMEOUT,
-        )
-        log.info("Auth response status: %d", auth_response.status_code)
-        auth_response.raise_for_status()
-    except Exception as e:
-        log.error("Failed to obtain Spotify auth token: %s", e)
-        raise
-
-    try:
-        access_token = auth_response.json()["access_token"]
-        log.info("Access token obtained (length=%d)", len(access_token))
-    except (KeyError, ValueError) as e:
-        log.error("Failed to parse access token from auth response: %s", e)
-        raise
-
-    url = f"https://api.spotify.com/v1/tracks/{song_id}"
-    log.info("Attempting to fetch track data from %s", url)
-    try:
-        response = get(
-            url,
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=REQUEST_TIMEOUT,
-        )
-        log.info("Track response status: %d", response.status_code)
+        response = get(url, params=params, timeout=REQUEST_TIMEOUT)
+        log.info("Deezer response status: %d", response.status_code)
         response.raise_for_status()
-        log.info("Track data received: name=%r", response.json().get("name"))
+        results = response.json().get("data", [])
+        if not results:
+            raise ValueError(f"No Deezer results for {artist!r} - {track!r}")
+        log.info("Deezer top result: %r by %r (rank=%s)",
+                 results[0].get("title"), results[0].get("artist", {}).get("name"), results[0].get("rank"))
         return response
     except Exception as e:
-        log.error("Failed to fetch track data: %s", e)
+        log.error("Failed to fetch Deezer track data: %s", e)
         raise
 
 
-def get_popularity(client_id, client_secret, song_id):
-    response = get_data(client_id, client_secret, song_id)
+def get_popularity(artist, track):
+    response = get_data(artist, track)
     try:
-        popularity = response.json()["popularity"]
-        if popularity is None:
-            raise ValueError("Spotify returned null for popularity")
-        log.info("Popularity score: %d", popularity)
+        rank = response.json()["data"][0]["rank"]
+        if rank is None:
+            raise ValueError("Deezer returned null for rank")
+        popularity = round(rank / 10000)
+        log.info("Deezer rank: %d → popularity: %d%%", rank, popularity)
         return popularity
-    except (KeyError, ValueError) as e:
-        log.error("Failed to parse popularity from track response: %s", e)
+    except (KeyError, IndexError, ValueError) as e:
+        log.error("Failed to parse rank from Deezer response: %s", e)
         raise
 
 
@@ -170,16 +150,10 @@ def main():
     log.info("Python version: %s", sys.version)
     log.info("Working directory: %s", Path.cwd())
 
-    log.info("SPOTIFY_CLIENT_ID: %s", f"non-empty ({len(our_client_id)} chars)" if our_client_id else "EMPTY")
-    log.info("SPOTIFY_CLIENT_SECRET: %s", f"non-empty ({len(our_client_secret)} chars)" if our_client_secret else "EMPTY")
     log.info("GITHUB_APP_ID: %s", f"non-empty ({len(github_app_id)} chars)" if github_app_id else "EMPTY")
     log.info("GITHUB_APP_PRIVATE_KEY: %s", f"non-empty ({len(github_app_private_key)} chars)" if github_app_private_key else "EMPTY")
     log.info("GIT_USER_NAME: %s", git_user_name)
     log.info("GIT_USER_EMAIL: %s", git_user_email)
-
-    if not our_client_id or not our_client_secret:
-        log.error("Missing Spotify credentials — aborting")
-        sys.exit(1)
 
     if not github_app_id or not github_app_private_key:
         log.error("Missing GitHub App credentials — aborting")
@@ -203,11 +177,10 @@ def main():
         except Exception as e:
             log.warning("Failed to read existing data file: %s", e)
 
-    log.info("--- Step 3: fetch popularity from Spotify ---")
+    log.info("--- Step 3: fetch popularity from Deezer ---")
     popularity = get_popularity(
-        client_id=our_client_id,
-        client_secret=our_client_secret,
-        song_id=this_song_id,
+        artist=deezer_artist,
+        track=deezer_track,
     )
 
     log.info("--- Step 4: write data file ---")
